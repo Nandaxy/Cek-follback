@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cek FollBack Instagram - Cek siapa yang Seleb</title>
+<meta name="description" content="Cek siapa aja yang gak follow back Instagram kamu! Upload file JSON followers dan following, terus lihat siapa yang masih belum follow balik.">
+<meta name="keywords" content="Instagram, follback, cek follower, analisis Instagram, sosial media, temen, follow">
+<meta name="author" content="nandaaa_79">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://www.example.com/cek-follback-instagram">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.example.com">
+<meta property="og:title" content="Cek FollBack Instagram - Temukan Siapa yang Tidak FollBack Anda">
+<meta property="og:description" content="Cek siapa aja yang gak follow back Instagram kamu! Upload file JSON followers dan following, terus lihat siapa yang masih belum follow balik.">
+<meta property="og:image" content="https://www.example.com">
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="https://www.example.com">
+<meta property="twitter:title" content="Cek FollBack Instagram - Temukan Siapa yang Tidak FollBack Anda">
+<meta property="twitter:description" content="Cek siapa aja yang gak follow back Instagram kamu! Upload file JSON followers dan following, terus lihat siapa yang masih belum follow balik.">
+<meta property="twitter:image" content="https://www.example.com">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            plugins: [require('daisyui')],
+        };
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui/dist/full.css" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(45deg, #6EE7B7, #3B82F6, #9333EA, #F472B6);
+            background-size: 400% 400%;
+            animation: gradient 8s infinite;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .result-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .result-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center">
+    <main class="card w-full max-w-4xl bg-white shadow-2xl rounded-lg p-6">
+        <h1 class="text-3xl font-bold text-center mb-4 text-blue-700">Cek Siapa yang Ga FollBack</h1>
+        <p class="text-gray-600 text-center mb-6">
+            Unggah file daftar <strong>followers</strong> dan <strong>following</strong> dari Instagram Anda untuk mengetahui siapa yang tidak meng Follback. Klik username untuk membuka profil Instagram.
+        </p>
+        <p class="text-sm text-gray-500 text-center mb-6">
+            <strong>Catatan:</strong> Hasil ini berdasarkan data yang terdapat pada file JSON, bukan data real time
+        </p>
+        <form id="uploadForm" class="space-y-4">
+            <div>
+                <label for="followers" class="block text-sm font-medium text-gray-700">File Followers (JSON):</label>
+                <input type="file" id="followers" accept=".json" required 
+                    class="file-input file-input-bordered w-full mt-2">
+                <p id="followers-error" class="text-red-500 text-sm mt-2"></p>
+            </div>
+            <div>
+                <label for="following" class="block text-sm font-medium text-gray-700">File Following (JSON):</label>
+                <input type="file" id="following" accept=".json" required 
+                    class="file-input file-input-bordered w-full mt-2">
+                <p id="following-error" class="text-red-500 text-sm mt-2"></p>
+            </div>
+            <button type="submit" class="btn btn-primary w-full mt-6">Cek Sekarang</button>
+        </form>
+        <div id="result" class="mt-8"></div>
+    </main>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const followersFile = document.getElementById('followers').files[0];
+            const followingFile = document.getElementById('following').files[0];
+            
+            document.getElementById('followers-error').textContent = '';
+            document.getElementById('following-error').textContent = '';
+
+            if (!followersFile || !followingFile) {
+                alert('Harap unggah kedua file.');
+                return;
+            }
+
+            if (followersFile.type !== 'application/json' || followingFile.type !== 'application/json') {
+                if (followersFile.type !== 'application/json') {
+                    document.getElementById('followers-error').textContent = 'File followers harus berformat JSON.';
+                }
+                if (followingFile.type !== 'application/json') {
+                    document.getElementById('following-error').textContent = 'File following harus berformat JSON.';
+                }
+                return;
+            }
+
+            let followersData, followingData;
+            try {
+                followersData = JSON.parse(await followersFile.text());
+                followingData = JSON.parse(await followingFile.text());
+            } catch (error) {
+                alert('Terjadi kesalahan saat membaca file JSON. Pastikan file berformat JSON yang valid.');
+                return;
+            }
+
+            if (!followersData || !followersData.length || !followersData[0].string_list_data || !followingData.relationships_following) {
+                alert('File tidak berisi data followers atau following yang valid.');
+                return;
+            }
+
+            const followers = new Set(
+                followersData.map(item => ({
+                    username: item.string_list_data[0].value,
+                    href: item.string_list_data[0].href,
+                    timestamp: item.string_list_data[0].timestamp
+                }))
+            );
+
+            const following = followingData.relationships_following.map(item => ({
+                username: item.string_list_data[0].value,
+                href: item.string_list_data[0].href,
+                timestamp: item.string_list_data[0].timestamp
+            }));
+
+            const notFollback = following.filter(user => 
+                ![...followers].some(follower => follower.username === user.username)
+            );
+
+            const resultDiv = document.getElementById('result');
+            if (notFollback.length > 0) {
+                resultDiv.innerHTML = `
+                    <h2 class="text-lg font-bold text-gray-700">Hasil:</h2>
+                    <p class="text-gray-500 mb-4">Berikut adalah daftar akun yang mau jadi seleb.  (Ada ${notFollback.length} akun):</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        ${notFollback.map(user => `
+                            <div class="result-card p-4 bg-blue-50 rounded-lg shadow-sm">
+                                <a href="${user.href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 font-medium underline">
+                                    ${user.username}
+                                </a>
+                                <p class="text-xs text-gray-500 mt-1">Tanggal Follow: ${formatDate(user.timestamp)}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <h2 class="text-lg font-bold text-gray-700">Hasil:</h2>
+                    <p class="text-green-600 font-medium">Semua akun yang Anda ikuti sudah follow back!</p>
+                `;
+            }
+        });
+
+        function formatDate(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+    </script>
+</body>
+</html>
